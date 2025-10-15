@@ -34,6 +34,16 @@ class Estudiante:
                 curso TEXT NOT NULL
             );
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS estudiantes_cursos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_estudiante INTEGER NOT NULL,
+                id_curso INTEGER NOT NULL,
+                FOREIGN KEY (id_estudiante) REFERENCES estudiantes(id_estudiante),
+                FOREIGN KEY (id_curso) REFERENCES cursos(id_curso)
+            );
+        """)
+
         conn.commit()
         return conn
 
@@ -118,6 +128,55 @@ class Docente:
             for f in filas:
                 print(f"ID: {f['id_docente']} | Nombre: {f['nombre']} | Curso: {f['curso']}")
 
+class Inscripcion:
+    @staticmethod
+    def unir_estudiante_a_curso(id_estudiante, id_curso):
+        with Estudiante._conn() as conn:
+            cur_est = conn.execute("SELECT * FROM estudiantes WHERE id_estudiante = ?", (id_estudiante,))
+            cur_cur = conn.execute("SELECT * FROM cursos WHERE id_curso = ?", (id_curso,))
+            est = cur_est.fetchone()
+            cur = cur_cur.fetchone()
+
+            if not est:
+                print(" Estudiante no encontrado.")
+                return
+            if not cur:
+                print("Curso no encontrado.")
+                return
+
+
+            cur_insc = conn.execute("""
+                SELECT * FROM estudiantes_cursos
+                WHERE id_estudiante = ? AND id_curso = ?
+            """, (id_estudiante, id_curso))
+            if cur_insc.fetchone():
+                print(f" El estudiante '{est['nombre']}' ya está inscrito en '{cur['nombre']}'.")
+                return
+
+            conn.execute("""
+                INSERT INTO estudiantes_cursos (id_estudiante, id_curso)
+                VALUES (?, ?)
+            """, (id_estudiante, id_curso))
+            print(f"Estudiante '{est['nombre']}' se unió al curso '{cur['nombre']}' con éxito.")
+
+    @staticmethod
+    def listar_inscripciones():
+        with Estudiante._conn() as conn:
+            cur = conn.execute("""
+                SELECT e.nombre AS estudiante, c.nombre AS curso
+                FROM estudiantes_cursos ec
+                JOIN estudiantes e ON e.id_estudiante = ec.id_estudiante
+                JOIN cursos c ON c.id_curso = ec.id_curso
+                ORDER BY e.nombre;
+            """)
+            filas = cur.fetchall()
+            if not filas:
+                print("No hay inscripciones registradas.")
+                return
+            print("\n--- INSCRIPCIONES ---")
+            for f in filas:
+                print(f"Estudiante: {f['estudiante']} | Curso: {f['curso']}")
+
 class MenuSistema:
     def __init__(self):
         pass
@@ -128,6 +187,7 @@ class MenuSistema:
             print("1. Estudiantes")
             print("2. Cursos")
             print("3. Docentes")
+            print("4. Inscripciones")
             print("0. Salir")
             op = input("Opción: ")
             if op == "1":
@@ -136,6 +196,8 @@ class MenuSistema:
                 self.menu_cursos()
             elif op == "3":
                 self.menu_docentes()
+            elif op == "4":
+                self.menu_inscripciones()
             elif op == "0":
                 print("¡Hasta pronto!")
                 break
@@ -202,6 +264,28 @@ class MenuSistema:
                 break
             else:
                 print("Opción inválida.")
+
+    def menu_inscripciones(self):
+        while True:
+            print("\n--- MENÚ INSCRIPCIONES ---")
+            print("1. Unir estudiante a curso")
+            print("2. Listar inscripciones")
+            print("0. Volver")
+            op = input("Opción: ")
+
+            if op == "1":
+                Estudiante.listar()
+                id_est = int(input("Ingrese ID del estudiante: "))
+                Curso.listar()
+                id_curso = int(input("Ingrese ID del curso: "))
+                Inscripcion.unir_estudiante_a_curso(id_est, id_curso)
+            elif op == "2":
+                Inscripcion.listar_inscripciones()
+            elif op == "0":
+                break
+            else:
+                print("Opción inválida.")
+
 
 if __name__ == "__main__":
     menu = MenuSistema()
