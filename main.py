@@ -20,6 +20,20 @@ class Estudiante:
                 promedio REAL
             );
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS cursos (
+                id_curso INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                creditos INTEGER
+            );
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS docentes (
+                id_docente INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                curso TEXT NOT NULL
+            );
+        """)
         conn.commit()
         return conn
 
@@ -44,32 +58,6 @@ class Estudiante:
                 print(f"ID: {f['id_estudiante']} | Nombre: {f['nombre']} | Carrera: {f['carrera']} | Promedio: {f['promedio']}")
 
     @staticmethod
-    def modificar():
-        ide = input("Ingrese ID del estudiante a modificar: ")
-        with Estudiante._conn() as conn:
-            cur = conn.execute("SELECT * FROM estudiantes WHERE id_estudiante = ?", (ide,))
-            fila = cur.fetchone()
-            if not fila:
-                print("No se encontró el estudiante.")
-                return
-            nombre = input(f"Nuevo nombre [{fila['nombre']}]: ") or fila['nombre']
-            carrera = input(f"Nueva carrera [{fila['carrera']}]: ") or fila['carrera']
-            promedio = input(f"Nuevo promedio [{fila['promedio']}]: ") or fila['promedio']
-            conn.execute("UPDATE estudiantes SET nombre=?, carrera=?, promedio=? WHERE id_estudiante=?",
-                         (nombre, carrera, promedio, ide))
-        print("Estudiante actualizado con éxito.")
-
-    @staticmethod
-    def eliminar():
-        ide = input("Ingrese ID del estudiante a eliminar: ")
-        with Estudiante._conn() as conn:
-            cur = conn.execute("DELETE FROM estudiantes WHERE id_estudiante = ?", (ide,))
-            if cur.rowcount == 0:
-                print("No se encontró el estudiante.")
-            else:
-                print("Estudiante eliminado con éxito.")
-
-    @staticmethod
     def promedio_general():
         with Estudiante._conn() as conn:
             cur = conn.execute("SELECT AVG(promedio) AS prom FROM estudiantes")
@@ -78,70 +66,88 @@ class Estudiante:
                 print(f"\nPromedio general: {prom:.2f}")
             else:
                 print("No hay datos para calcular el promedio.")
+
+
 class Curso:
-    def __init__(self,nombre,puntaje):
-        self.nombre=nombre
-        self.puntaje=puntaje
+    def __init__(self, nombre, creditos):
+        self.nombre = nombre
+        self.creditos = creditos
 
     def guardar(self):
         with Estudiante._conn() as conn:
             conn.execute(
                 "INSERT INTO cursos (nombre, creditos) VALUES (?, ?)",
-                (self.nombre, self.puntaje)
+                (self.nombre, self.creditos)
             )
-            print(f"Curso '{self.nombre}' guardado con éxito.")
+        print(f"Curso '{self.nombre}' guardado con éxito.")
+
     @staticmethod
     def listar():
         with Estudiante._conn() as conn:
-            cur=conn.execute("SELECT * FRON cursos")
-            fila=cur.fetchall()
-            if not fila:
-                print("No hay lista de cursos")
+            cur = conn.execute("SELECT * FROM cursos")
+            filas = cur.fetchall()
+            if not filas:
+                print("No hay cursos registrados.")
                 return
-            print("\n ---Lista de cursos---")
-            for f in fila:
+            print("\n--- LISTA DE CURSOS ---")
+            for f in filas:
                 print(f"ID: {f['id_curso']} | Nombre: {f['nombre']} | Créditos: {f['creditos']}")
 
 class Docente:
-    def __init__(self,id_docente,nombre,curso):
-        self.id_docente=id_docente
-        self.nombre=nombre
-        self.curso=curso
+    def __init__(self, nombre, curso):
+        self.nombre = nombre
+        self.curso = curso
 
     def guardar(self):
         with Estudiante._conn() as conn:
             conn.execute(
-                "INSERT INTO Docente(id_docente,nombre,curso) VALUES (?, ?, ?)",
-                (self.nombre,self.nombre,self.curso)
+                "INSERT INTO docentes (nombre, curso) VALUES (?, ?)",
+                (self.nombre, self.curso)
             )
-            print(f"Docente {self.nombre} guardado correctamente")
-
+        print(f"Docente '{self.nombre}' guardado con éxito.")
 
     @staticmethod
-    def listar_doce():
+    def listar():
         with Estudiante._conn() as conn:
-            doce=conn.execute("SELECT * FROM Docente")
-            fila=doce.fetchall()
-            if not fila:
-                print("No hay ningun docente registrado")
+            cur = conn.execute("SELECT * FROM docentes")
+            filas = cur.fetchall()
+            if not filas:
+                print("No hay docentes registrados.")
                 return
-            print("\n Lista de docentes")
-            for f in fila:
+            print("\n--- LISTA DE DOCENTES ---")
+            for f in filas:
                 print(f"ID: {f['id_docente']} | Nombre: {f['nombre']} | Curso: {f['curso']}")
 
-# --- MENÚ PRINCIPAL ---
 class MenuSistema:
     def __init__(self):
         pass
+
+    def menu_principal(self):
+        while True:
+            print("\n--- MENÚ PRINCIPAL ---")
+            print("1. Estudiantes")
+            print("2. Cursos")
+            print("3. Docentes")
+            print("0. Salir")
+            op = input("Opción: ")
+            if op == "1":
+                self.menu_estudiantes()
+            elif op == "2":
+                self.menu_cursos()
+            elif op == "3":
+                self.menu_docentes()
+            elif op == "0":
+                print("¡Hasta pronto!")
+                break
+            else:
+                print("Opción inválida.")
 
     def menu_estudiantes(self):
         while True:
             print("\n--- MENÚ ESTUDIANTES ---")
             print("1. Agregar estudiante")
             print("2. Listar estudiantes")
-            print("3. Asignar estudiante a curso")
-            print("4. Ver cursos asignados")
-            print("5. Ver promedio general")
+            print("3. Ver promedio general")
             print("0. Volver")
             op = input("Opción: ")
 
@@ -153,10 +159,6 @@ class MenuSistema:
             elif op == "2":
                 Estudiante.listar()
             elif op == "3":
-                Estudiante.asignar_a_curso()
-            elif op == "4":
-                Estudiante.ver_cursos()
-            elif op == "5":
                 Estudiante.promedio_general()
             elif op == "0":
                 break
@@ -202,4 +204,5 @@ class MenuSistema:
                 print("Opción inválida.")
 
 if __name__ == "__main__":
-    menu()
+    menu = MenuSistema()
+    menu.menu_principal()
