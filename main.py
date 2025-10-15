@@ -99,6 +99,8 @@ class Curso:
                 print("No hay lista de cursos")
                 return
             print("\n ---Lista de cursos---")
+            for f in fila:
+                print(f"ID: {f['id_curso']} | Nombre: {f['nombre']} | Créditos: {f['creditos']}")
 
 class Docente:
     def __init__(self,id_docente,nombre,curso):
@@ -114,6 +116,18 @@ class Docente:
             )
             print(f"Docente {self.nombre} guardado correctamente")
 
+
+    @staticmethod
+    def listar_doce():
+        with Estudiante._conn() as conn:
+            doce=conn.execute("SELECT * FROM Docente")
+            fila=doce.fetchall()
+            if not fila:
+                print("No hay ningun docente registrado")
+                return
+            print("\n Lista de docentes")
+            for f in fila:
+                print(f"ID: {f['id_docente']} | Nombre: {f['nombre']} | Curso: {f['curso']}")
 
 # --- MENÚ PRINCIPAL ---
 def menu():
