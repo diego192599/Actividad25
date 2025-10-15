@@ -79,8 +79,26 @@ class Estudiante:
             else:
                 print("No hay datos para calcular el promedio.")
 class Curso:
-    def __init__(self,nombre,cursos):
+    def __init__(self,nombre,puntaje):
+        self.nombre=nombre
+        self.puntaje=puntaje
 
+    def guardar(self):
+        with Estudiante._conn() as conn:
+            conn.execute(
+                "INSERT INTO cursos (nombre, creditos) VALUES (?, ?)",
+                (self.nombre, self.puntaje)
+            )
+            print(f"Curso '{self.nombre}' guardado con éxito.")
+    @staticmethod
+    def listar():
+        with Estudiante._conn() as conn:
+            cur=conn.execute("SELECT * FRON cursos")
+            fila=cur.fetchall()
+            if not fila:
+                print("No hay lista de cursos")
+                return
+            print("\n ---Lista de cursos---")
 
 
 # --- MENÚ PRINCIPAL ---
