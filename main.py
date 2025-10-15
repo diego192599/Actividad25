@@ -100,6 +100,14 @@ class Curso:
                 return
             print("\n ---Lista de cursos---")
 
+class Docente:
+    def __init__(self,id_catedratico,nombre,curso):
+        self.id_catedratico=id_catedratico
+        self.nombre=nombre
+        self.curso=curso
+
+    def guardar(self):
+        with Estudiante._conn() as conn:
 
 # --- MENÚ PRINCIPAL ---
 def menu():
