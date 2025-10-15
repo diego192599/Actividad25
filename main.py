@@ -130,37 +130,76 @@ class Docente:
                 print(f"ID: {f['id_docente']} | Nombre: {f['nombre']} | Curso: {f['curso']}")
 
 # --- MENÚ PRINCIPAL ---
-def menu():
-    while True:
-        print("\n===== MENÚ DE ESTUDIANTES =====")
-        print("1. Ingresar estudiante")
-        print("2. Listar estudiantes")
-        print("3. Modificar estudiante")
-        print("4. Eliminar estudiante")
-        print("5. Promedio general")
-        print("0. Salir")
-        opcion = input("Seleccione una opción: ")
+class MenuSistema:
+    def __init__(self):
+        pass
 
-        if opcion == "1":
-            nombre = input("Nombre: ")
-            carrera = input("Carrera: ")
-            promedio = float(input("Promedio: "))
-            e = Estudiante(nombre, carrera, promedio)
-            e.guardar()
-        elif opcion == "2":
-            Estudiante.listar()
-        elif opcion == "3":
-            Estudiante.modificar()
-        elif opcion == "4":
-            Estudiante.eliminar()
-        elif opcion == "5":
-            Estudiante.promedio_general()
-        elif opcion == "0":
-            print("Saliendo del programa...")
-            break
-        else:
-            print("Opción inválida. Intente nuevamente.")
+    def menu_estudiantes(self):
+        while True:
+            print("\n--- MENÚ ESTUDIANTES ---")
+            print("1. Agregar estudiante")
+            print("2. Listar estudiantes")
+            print("3. Asignar estudiante a curso")
+            print("4. Ver cursos asignados")
+            print("5. Ver promedio general")
+            print("0. Volver")
+            op = input("Opción: ")
 
+            if op == "1":
+                nombre = input("Nombre: ")
+                carrera = input("Carrera: ")
+                promedio = float(input("Promedio: "))
+                Estudiante(nombre, carrera, promedio).guardar()
+            elif op == "2":
+                Estudiante.listar()
+            elif op == "3":
+                Estudiante.asignar_a_curso()
+            elif op == "4":
+                Estudiante.ver_cursos()
+            elif op == "5":
+                Estudiante.promedio_general()
+            elif op == "0":
+                break
+            else:
+                print("Opción inválida.")
+
+    def menu_cursos(self):
+        while True:
+            print("\n--- MENÚ CURSOS ---")
+            print("1. Agregar curso")
+            print("2. Listar cursos")
+            print("0. Volver")
+            op = input("Opción: ")
+
+            if op == "1":
+                nombre = input("Nombre del curso: ")
+                creditos = int(input("Créditos: "))
+                Curso(nombre, creditos).guardar()
+            elif op == "2":
+                Curso.listar()
+            elif op == "0":
+                break
+            else:
+                print("Opción inválida.")
+
+    def menu_docentes(self):
+        while True:
+            print("\n--- MENÚ DOCENTES ---")
+            print("1. Agregar docente")
+            print("2. Listar docentes")
+            print("0. Volver")
+            op = input("Opción: ")
+
+            if op == "1":
+                nombre = input("Nombre del docente: ")
+                curso = input("Curso que imparte: ")
+                Docente(nombre, curso).guardar()
+            elif op == "2":
+                Docente.listar()
+            elif op == "0":
+                break
+            else:
+                print("Opción inválida.")
 
 if __name__ == "__main__":
     menu()
