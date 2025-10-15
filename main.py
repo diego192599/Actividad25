@@ -101,13 +101,19 @@ class Curso:
             print("\n ---Lista de cursos---")
 
 class Docente:
-    def __init__(self,id_catedratico,nombre,curso):
-        self.id_catedratico=id_catedratico
+    def __init__(self,id_docente,nombre,curso):
+        self.id_docente=id_docente
         self.nombre=nombre
         self.curso=curso
 
     def guardar(self):
         with Estudiante._conn() as conn:
+            conn.execute(
+                "INSERT INTO Docente(id_docente,nombre,curso) VALUES (?, ?, ?)",
+                (self.nombre,self.nombre,self.curso)
+            )
+            print(f"Docente {self.nombre} guardado correctamente")
+
 
 # --- MENÚ PRINCIPAL ---
 def menu():
