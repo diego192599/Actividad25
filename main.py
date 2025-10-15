@@ -24,7 +24,7 @@ class Estudiante:
             CREATE TABLE IF NOT EXISTS cursos (
                 id_curso INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre TEXT NOT NULL,
-                creditos INTEGER
+                puntaje INTEGER
             );
         """)
         conn.execute("""
@@ -43,17 +43,17 @@ class Estudiante:
                 FOREIGN KEY (id_curso) REFERENCES cursos(id_curso)
             );
         """)
-
         conn.commit()
         return conn
 
+    # CRUD
     def guardar(self):
         with self._conn() as conn:
             conn.execute(
                 "INSERT INTO estudiantes (nombre, carrera, promedio) VALUES (?, ?, ?)",
                 (self.nombre, self.carrera, self.promedio)
             )
-        print(f"Estudiante '{self.nombre}' guardado con éxito.")
+        print(f" Estudiante '{self.nombre}' guardado con éxito.")
 
     @staticmethod
     def listar():
@@ -68,6 +68,21 @@ class Estudiante:
                 print(f"ID: {f['id_estudiante']} | Nombre: {f['nombre']} | Carrera: {f['carrera']} | Promedio: {f['promedio']}")
 
     @staticmethod
+    def actualizar(id_estudiante, nombre, carrera, promedio):
+        with Estudiante._conn() as conn:
+            conn.execute("""
+                UPDATE estudiantes SET nombre = ?, carrera = ?, promedio = ?
+                WHERE id_estudiante = ?
+            """, (nombre, carrera, promedio, id_estudiante))
+        print(" Estudiante actualizado correctamente.")
+
+    @staticmethod
+    def eliminar(id_estudiante):
+        with Estudiante._conn() as conn:
+            conn.execute("DELETE FROM estudiantes WHERE id_estudiante = ?", (id_estudiante,))
+        print(" Estudiante eliminado correctamente.")
+
+    @staticmethod
     def promedio_general():
         with Estudiante._conn() as conn:
             cur = conn.execute("SELECT AVG(promedio) AS prom FROM estudiantes")
@@ -79,17 +94,17 @@ class Estudiante:
 
 
 class Curso:
-    def __init__(self, nombre, creditos):
+    def __init__(self, nombre, puntaje):
         self.nombre = nombre
-        self.creditos = creditos
+        self.puntaje = puntaje
 
     def guardar(self):
         with Estudiante._conn() as conn:
             conn.execute(
-                "INSERT INTO cursos (nombre, creditos) VALUES (?, ?)",
-                (self.nombre, self.creditos)
+                "INSERT INTO cursos (nombre, puntaje) VALUES (?, ?)",
+                (self.nombre, self.puntaje)
             )
-        print(f"Curso '{self.nombre}' guardado con éxito.")
+        print(f" Curso '{self.nombre}' guardado con éxito.")
 
     @staticmethod
     def listar():
@@ -101,7 +116,23 @@ class Curso:
                 return
             print("\n--- LISTA DE CURSOS ---")
             for f in filas:
-                print(f"ID: {f['id_curso']} | Nombre: {f['nombre']} | Créditos: {f['creditos']}")
+                print(f"ID: {f['id_curso']} | Nombre: {f['nombre']} | Puntaje: {f['puntaje']}")
+
+    @staticmethod
+    def actualizar(id_curso, nombre, puntaje):
+        with Estudiante._conn() as conn:
+            conn.execute("""
+                UPDATE cursos SET nombre = ?, puntaje = ?
+                WHERE id_curso = ?
+            """, (nombre, puntaje, id_curso))
+        print("Curso actualizado correctamente.")
+
+    @staticmethod
+    def eliminar(id_curso):
+        with Estudiante._conn() as conn:
+            conn.execute("DELETE FROM cursos WHERE id_curso = ?", (id_curso,))
+        print(" Curso eliminado correctamente.")
+
 
 class Docente:
     def __init__(self, nombre, curso):
@@ -114,7 +145,7 @@ class Docente:
                 "INSERT INTO docentes (nombre, curso) VALUES (?, ?)",
                 (self.nombre, self.curso)
             )
-        print(f"Docente '{self.nombre}' guardado con éxito.")
+        print(f" Docente '{self.nombre}' guardado con éxito.")
 
     @staticmethod
     def listar():
@@ -127,6 +158,22 @@ class Docente:
             print("\n--- LISTA DE DOCENTES ---")
             for f in filas:
                 print(f"ID: {f['id_docente']} | Nombre: {f['nombre']} | Curso: {f['curso']}")
+
+    @staticmethod
+    def actualizar(id_docente, nombre, curso):
+        with Estudiante._conn() as conn:
+            conn.execute("""
+                UPDATE docentes SET nombre = ?, curso = ?
+                WHERE id_docente = ?
+            """, (nombre, curso, id_docente))
+        print(" Docente actualizado correctamente.")
+
+    @staticmethod
+    def eliminar(id_docente):
+        with Estudiante._conn() as conn:
+            conn.execute("DELETE FROM docentes WHERE id_docente = ?", (id_docente,))
+        print(" Docente eliminado correctamente.")
+
 
 class Inscripcion:
     @staticmethod
@@ -141,9 +188,8 @@ class Inscripcion:
                 print(" Estudiante no encontrado.")
                 return
             if not cur:
-                print("Curso no encontrado.")
+                print(" Curso no encontrado.")
                 return
-
 
             cur_insc = conn.execute("""
                 SELECT * FROM estudiantes_cursos
@@ -157,7 +203,7 @@ class Inscripcion:
                 INSERT INTO estudiantes_cursos (id_estudiante, id_curso)
                 VALUES (?, ?)
             """, (id_estudiante, id_curso))
-            print(f"Estudiante '{est['nombre']}' se unió al curso '{cur['nombre']}' con éxito.")
+            print(f" Estudiante '{est['nombre']}' se unió al curso '{cur['nombre']}'.")
 
     @staticmethod
     def listar_inscripciones():
@@ -177,6 +223,16 @@ class Inscripcion:
             for f in filas:
                 print(f"Estudiante: {f['estudiante']} | Curso: {f['curso']}")
 
+    @staticmethod
+    def eliminar_inscripcion(id_estudiante, id_curso):
+        with Estudiante._conn() as conn:
+            conn.execute("""
+                DELETE FROM estudiantes_cursos
+                WHERE id_estudiante = ? AND id_curso = ?
+            """, (id_estudiante, id_curso))
+        print("Inscripción eliminada correctamente.")
+
+
 class MenuSistema:
     def __init__(self):
         pass
@@ -190,6 +246,7 @@ class MenuSistema:
             print("4. Inscripciones")
             print("0. Salir")
             op = input("Opción: ")
+
             if op == "1":
                 self.menu_estudiantes()
             elif op == "2":
@@ -207,9 +264,11 @@ class MenuSistema:
     def menu_estudiantes(self):
         while True:
             print("\n--- MENÚ ESTUDIANTES ---")
-            print("1. Agregar estudiante")
-            print("2. Listar estudiantes")
-            print("3. Ver promedio general")
+            print("1. Agregar")
+            print("2. Listar")
+            print("3. Actualizar")
+            print("4. Eliminar")
+            print("5. Ver promedio general")
             print("0. Volver")
             op = input("Opción: ")
 
@@ -221,6 +280,17 @@ class MenuSistema:
             elif op == "2":
                 Estudiante.listar()
             elif op == "3":
+                Estudiante.listar()
+                id_e = int(input("ID del estudiante: "))
+                nombre = input("Nuevo nombre: ")
+                carrera = input("Nueva carrera: ")
+                promedio = float(input("Nuevo promedio: "))
+                Estudiante.actualizar(id_e, nombre, carrera, promedio)
+            elif op == "4":
+                Estudiante.listar()
+                id_e = int(input("ID del estudiante a eliminar: "))
+                Estudiante.eliminar(id_e)
+            elif op == "5":
                 Estudiante.promedio_general()
             elif op == "0":
                 break
@@ -230,17 +300,29 @@ class MenuSistema:
     def menu_cursos(self):
         while True:
             print("\n--- MENÚ CURSOS ---")
-            print("1. Agregar curso")
-            print("2. Listar cursos")
+            print("1. Agregar")
+            print("2. Listar")
+            print("3. Actualizar")
+            print("4. Eliminar")
             print("0. Volver")
             op = input("Opción: ")
 
             if op == "1":
                 nombre = input("Nombre del curso: ")
-                creditos = int(input("Créditos: "))
-                Curso(nombre, creditos).guardar()
+                puntaje = int(input("Puntaje para ganar el curso: "))
+                Curso(nombre, puntaje).guardar()
             elif op == "2":
                 Curso.listar()
+            elif op == "3":
+                Curso.listar()
+                id_c = int(input("ID del curso: "))
+                nombre = input("Nuevo nombre: ")
+                puntaje = int(input("Nuevo puntaje: "))
+                Curso.actualizar(id_c, nombre, puntaje)
+            elif op == "4":
+                Curso.listar()
+                id_c = int(input("ID del curso a eliminar: "))
+                Curso.eliminar(id_c)
             elif op == "0":
                 break
             else:
@@ -249,8 +331,10 @@ class MenuSistema:
     def menu_docentes(self):
         while True:
             print("\n--- MENÚ DOCENTES ---")
-            print("1. Agregar docente")
-            print("2. Listar docentes")
+            print("1. Agregar")
+            print("2. Listar")
+            print("3. Actualizar")
+            print("4. Eliminar")
             print("0. Volver")
             op = input("Opción: ")
 
@@ -260,6 +344,16 @@ class MenuSistema:
                 Docente(nombre, curso).guardar()
             elif op == "2":
                 Docente.listar()
+            elif op == "3":
+                Docente.listar()
+                id_d = int(input("ID del docente: "))
+                nombre = input("Nuevo nombre: ")
+                curso = input("Nuevo curso: ")
+                Docente.actualizar(id_d, nombre, curso)
+            elif op == "4":
+                Docente.listar()
+                id_d = int(input("ID del docente a eliminar: "))
+                Docente.eliminar(id_d)
             elif op == "0":
                 break
             else:
@@ -270,17 +364,24 @@ class MenuSistema:
             print("\n--- MENÚ INSCRIPCIONES ---")
             print("1. Unir estudiante a curso")
             print("2. Listar inscripciones")
+            print("3. Eliminar inscripción")
             print("0. Volver")
             op = input("Opción: ")
 
             if op == "1":
                 Estudiante.listar()
-                id_est = int(input("Ingrese ID del estudiante: "))
+                id_est = int(input("ID del estudiante: "))
                 Curso.listar()
-                id_curso = int(input("Ingrese ID del curso: "))
+                id_curso = int(input("ID del curso: "))
                 Inscripcion.unir_estudiante_a_curso(id_est, id_curso)
             elif op == "2":
                 Inscripcion.listar_inscripciones()
+            elif op == "3":
+                Estudiante.listar()
+                id_est = int(input("ID del estudiante: "))
+                Curso.listar()
+                id_curso = int(input("ID del curso: "))
+                Inscripcion.eliminar_inscripcion(id_est, id_curso)
             elif op == "0":
                 break
             else:
